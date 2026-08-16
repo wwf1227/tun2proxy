@@ -298,7 +298,8 @@ where
                     log::warn!("Too many sessions that over {max_sessions}, dropping new session");
                     continue;
                 }
-                log::trace!("Session count {}", task_count.fetch_add(1, Relaxed).saturating_add(1));
+                let count = task_count.fetch_add(1, Relaxed).saturating_add(1);
+                log::trace!("Session count {count}");
                 let info = SessionInfo::new(tcp.local_addr(), tcp.peer_addr(), IpProtocol::Tcp);
                 let domain_name = if let Some(virtual_dns) = &virtual_dns {
                     let mut virtual_dns = virtual_dns.lock().await;
@@ -313,7 +314,8 @@ where
                     if let Err(err) = handle_tcp_session(tcp, proxy_handler, socket_queue).await {
                         log::error!("{info} error \"{err}\"");
                     }
-                    log::trace!("Session count {}", task_count.fetch_sub(1, Relaxed).saturating_sub(1));
+                    let count = task_count.fetch_sub(1, Relaxed).saturating_sub(1);
+                    log::trace!("Session count {count}");
                 });
             }
             IpStackStream::Udp(udp) => {
@@ -325,7 +327,8 @@ where
                     log::warn!("Too many sessions that over {max_sessions}, dropping new session");
                     continue;
                 }
-                log::trace!("Session count {}", task_count.fetch_add(1, Relaxed).saturating_add(1));
+                let count = task_count.fetch_add(1, Relaxed).saturating_add(1);
+                log::trace!("Session count {count}");
                 let mut info = SessionInfo::new(udp.local_addr(), udp.peer_addr(), IpProtocol::Udp);
                 if info.dst.port() == DNS_PORT {
                     if is_private_ip(info.dst.ip()) {
@@ -339,7 +342,8 @@ where
                             if let Err(err) = handle_dns_over_tcp_session(udp, proxy_handler, socket_queue, ipv6_enabled).await {
                                 log::error!("{info} error \"{err}\"");
                             }
-                            log::trace!("Session count {}", task_count.fetch_sub(1, Relaxed).saturating_sub(1));
+                            let count = task_count.fetch_sub(1, Relaxed).saturating_sub(1);
+                            log::trace!("Session count {count}");
                         });
                         continue;
                     }
@@ -350,7 +354,8 @@ where
                                     log::error!("{info} error \"{err}\"");
                                 }
                             }
-                            log::trace!("Session count {}", task_count.fetch_sub(1, Relaxed).saturating_sub(1));
+                            let count = task_count.fetch_sub(1, Relaxed).saturating_sub(1);
+                            log::trace!("Session count {count}");
                         });
                         continue;
                     }
@@ -381,7 +386,8 @@ where
                         if let Err(e) = handle_udp_gateway_session(udp, udpgw, &dst_addr, proxy_handler, queue, ipv6_enabled).await {
                             log::info!("Ending {info} with \"{e}\"");
                         }
-                        log::trace!("Session count {}", task_count.fetch_sub(1, Relaxed).saturating_sub(1));
+                        let count = task_count.fetch_sub(1, Relaxed).saturating_sub(1);
+                        log::trace!("Session count {count}");
                     });
                     continue;
                 }
@@ -393,7 +399,8 @@ where
                             if let Err(err) = handle_udp_associate_session(udp, ty, proxy_handler, socket_queue, ipv6_enabled).await {
                                 log::info!("Ending {info} with \"{err}\"");
                             }
-                            log::trace!("Session count {}", task_count.fetch_sub(1, Relaxed).saturating_sub(1));
+                            let count = task_count.fetch_sub(1, Relaxed).saturating_sub(1);
+                            log::trace!("Session count {count}");
                         });
                     }
                     Err(e) => {
